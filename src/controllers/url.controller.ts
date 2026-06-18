@@ -26,6 +26,6 @@ export async function getLinkHandler(req: Request, res: Response, next: NextFunc
         
     }
 
-    res.redirect(String(LinkResponse?.long_url));
+    res.redirect(String(LinkResponse));
     
 }

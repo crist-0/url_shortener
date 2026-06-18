@@ -1,3 +1,4 @@
+import { redisClient } from "../config/redis.js";
 import type { createShortenLinkDTO } from "../dto/url.dto.js";
 import { createShortenLink, getLink } from "../repositories/url.repository.js";
 
@@ -13,6 +14,15 @@ export async function createShortenLinkService(createShortenLinkObj: createShort
 
 export async function getLinkService(shortCode: string) {
 
-    const link = await getLink(shortCode);
+    const link: string | null = await redisClient.get(shortCode);
+
+    console.log("link == "+link);
+    
+    if(link == null){
+        const link = await getLink(shortCode);
+        await redisClient.set(shortCode, String(link?.long_url));
+        return link?.long_url;
+    }
+
     return link;
 }
