@@ -22,11 +22,24 @@ export async function getLinkService(shortCode: string) {
   console.log("link == " + link);
 
   if (link == null) {
-    const link = await getLink(shortCode);
-    await redisClient.set(shortCode, String(link?.long_url), {
-      EX: 3600,
-    });
-    return link?.long_url;
+    const lock_key = "lock:" + shortCode;
+
+    const lock = await redisClient.set(lock_key, 'locked', { 'NX': true, 'EX': 10});
+
+    if (lock === 'OK') {
+      try {
+          const link = await getLink(shortCode);
+          await redisClient.set(shortCode, String(link?.long_url), {
+            EX: 3600,
+          });g
+          return link?.long_url;
+      } finally {
+        await redisClient.del(lock_key);
+      }
+    }
+    else {
+      await new Promise(resolve => setTimeout(resolve, 200));
+    } return getLinkService(shortCode);
   }
 
   return link;
